@@ -1,4 +1,5 @@
 import pytest
+from src.common.errors import ConfigurationError
 from src.common.config import Config
 
 
@@ -9,6 +10,18 @@ class TestConfig:
         config = Config(str(config_file))
         assert config.get("app.name") == "test"
         assert config.get("app.port") == 8080
+
+    def test_load_invalid_json_reports_path_line_and_column(self, tmp_path):
+        config_file = tmp_path / "broken.json"
+        config_file.write_text('{"app": {\n  "name": "test",\n}')
+
+        with pytest.raises(ConfigurationError) as exc_info:
+            Config(str(config_file))
+
+        message = str(exc_info.value)
+        assert str(config_file) in message
+        assert "line 2" in message
+        assert "column 17" in message
 
     def test_default_value(self):
         config = Config()
