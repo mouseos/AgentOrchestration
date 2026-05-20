@@ -32,6 +32,22 @@ class TestConfig:
         assert data["key1"] == "value1"
         assert data["key2"] == "value2"
 
+    def test_env_override_parses_boolean_values(self, monkeypatch):
+        monkeypatch.setenv("AO_FEATURE_ENABLED", "false")
+        monkeypatch.setenv("AO_FEATURE_VISIBLE", "TRUE")
+
+        config = Config()
+
+        assert config.get("feature.enabled") is False
+        assert config.get("feature.visible") is True
+
+    def test_env_override_preserves_non_boolean_strings(self, monkeypatch):
+        monkeypatch.setenv("AO_FEATURE_ENABLED", "not false")
+
+        config = Config()
+
+        assert config.get("feature.enabled") == "not false"
+
 # 2019-02-01T18:58:35 update
 
 # 2019-07-31T13:45:15 update
