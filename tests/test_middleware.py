@@ -25,6 +25,10 @@ def create_test_app() -> FastAPI:
     async def protected_route():
         return {"ok": True}
 
+    @app.get("/api/v2/fails")
+    async def failing_route():
+        raise RuntimeError("handler failed")
+
     return app
 
 
@@ -55,3 +59,14 @@ class TestAuthMiddleware:
 
         assert response.status_code == 200
         assert response.json() == {"ok": True}
+
+    def test_authenticated_exception_path_is_not_converted_to_success(self):
+        client = TestClient(create_test_app(), raise_server_exceptions=False)
+
+        response = client.get(
+            "/api/v2/fails",
+            headers={"Authorization": "Bearer test-token"},
+        )
+
+        assert response.status_code == 500
+        assert "authorization" not in response.text.lower()
